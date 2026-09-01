@@ -3,320 +3,548 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Audio Converter - ভিডিও থেকে MP3</title>
+    <title>Multi-Platform Video Downloader - FB Downloader Pro</title>
+    <meta name="description" content="Facebook, YouTube, Instagram থেকে ভিডিও এবং অডিও ডাউনলোড করুন। ফ্রি অনলাইন টুল।">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --primary: #1877f2;
+            --secondary: #42b72a;
+            --accent: #8b5cf6;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #1c1e21;
+            --text-secondary: #65676b;
+            --border: #dddfe2;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --gradient: linear-gradient(135deg, #1877f2 0%, #42b72a 100%);
+        }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: -apple-system, sans-serif;
-            background: #f0f2f5;
+            font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
+        
         .container {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            max-width: 500px;
+            background: var(--card);
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+            max-width: 650px;
             width: 100%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #1877f2;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #65676b;
-            margin-bottom: 30px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-        input[type="url"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dddfe2;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        input[type="url"]:focus {
-            outline: none;
-            border-color: #1877f2;
-        }
-        .quality-group {
-            margin-bottom: 20px;
-        }
-        .quality-options {
-            display: flex;
-            gap: 10px;
-        }
-        .quality-option {
-            flex: 1;
-        }
-        .quality-option input {
-            display: none;
-        }
-        .quality-option label {
-            display: block;
-            padding: 10px;
-            text-align: center;
-            border: 2px solid #dddfe2;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .quality-option input:checked + label {
-            border-color: #1877f2;
-            background: #e7f3ff;
-            color: #1877f2;
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            background: #1877f2;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        button:hover:not(:disabled) {
-            background: #1464d6;
-        }
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        .error {
-            display: none;
-            margin-top: 15px;
-            padding: 12px;
-            background: #fde8e8;
-            color: #ff4444;
-            border-radius: 8px;
-            border-left: 4px solid #ff4444;
-        }
-        .error.active {
-            display: block;
-        }
-        .progress {
-            display: none;
-            margin-top: 20px;
-        }
-        .progress.active {
-            display: block;
-        }
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
             overflow: hidden;
         }
+        
+        .header {
+            background: var(--gradient);
+            padding: 25px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+        }
+        
+        .tab:hover {
+            color: var(--primary);
+            background: rgba(24, 119, 242, 0.05);
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+            background: rgba(24, 119, 242, 0.05);
+        }
+        
+        .tab-content {
+            padding: 25px;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        .url-input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .url-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(24, 119, 242, 0.1);
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .option-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .option-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            background: white;
+        }
+        
+        .convert-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .convert-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(24, 119, 242, 0.3);
+        }
+        
+        .convert-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .progress-bar {
+            display: none;
+            height: 6px;
+            background: var(--border);
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        
+        .progress-bar.active {
+            display: block;
+        }
+        
         .progress-fill {
             height: 100%;
-            background: #1877f2;
+            background: var(--gradient);
             width: 0%;
             transition: width 0.5s;
+            animation: progress 2s ease-in-out infinite;
         }
-        .progress-text {
-            text-align: center;
-            margin-top: 10px;
-            color: #65676b;
+        
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
         }
-        .result {
+        
+        .result-box {
             display: none;
             margin-top: 20px;
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .result.active {
-            display: block;
-        }
-        audio {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .download-btn {
-            display: block;
+            background: rgba(34, 197, 94, 0.08);
+            border: 2px solid rgba(34, 197, 94, 0.3);
+            border-radius: 10px;
             text-align: center;
-            padding: 12px;
-            background: #42b72a;
+        }
+        
+        .result-box.active {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 2rem;
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: #22c55e;
             color: white;
             text-decoration: none;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: 700;
+            transition: all 0.3s;
         }
+        
         .download-btn:hover {
-            background: #36a420;
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+        
+        .error-box {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.08);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #ef4444;
+            font-size: 0.9rem;
+        }
+        
+        .error-box.active {
+            display: block;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .tabs {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Facebook Audio Converter</h1>
-        <p class="subtitle">ভিডিও থেকে MP3 অডিও ডাউনলোড করুন</p>
-
-        <div class="input-group">
-            <label>Facebook Video URL</label>
-            <input type="url" id="videoUrl" placeholder="https://www.facebook.com/watch?v=...">
+        <div class="header">
+            <div class="header-icon">🎵</div>
+            <h1>Multi-Platform Downloader</h1>
+            <p>Facebook • YouTube • Instagram</p>
         </div>
-
-        <div class="quality-group">
-            <label>অডিও কোয়ালিটি</label>
-            <div class="quality-options">
-                <div class="quality-option">
-                    <input type="radio" name="quality" id="q96" value="96">
-                    <label for="q96">96 kbps</label>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('video')">
+                <i class="fas fa-video"></i> Video
+            </button>
+            <button class="tab" onclick="switchTab('audio')">
+                <i class="fas fa-music"></i> Audio
+            </button>
+            <button class="tab" onclick="switchTab('image')">
+                <i class="fas fa-image"></i> Image
+            </button>
+        </div>
+        
+        <div class="tab-content">
+            <!-- Video Tab -->
+            <div class="tab-pane active" id="videoTab">
+                <div class="input-group">
+                    <i class="fas fa-link input-icon"></i>
+                    <input type="url" class="url-input" id="videoUrl" placeholder="Video URL দিন...">
                 </div>
-                <div class="quality-option">
-                    <input type="radio" name="quality" id="q128" value="128" checked>
-                    <label for="q128">128 kbps</label>
+                
+                <div class="options-grid">
+                    <div class="option-group">
+                        <label>Quality</label>
+                        <select id="videoQuality">
+                            <option value="best">Best</option>
+                            <option value="1080">1080p</option>
+                            <option value="720">720p</option>
+                            <option value="480">480p</option>
+                            <option value="360">360p</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label>Format</label>
+                        <select id="videoFormat">
+                            <option value="mp4">MP4</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="quality-option">
-                    <input type="radio" name="quality" id="q192" value="192">
-                    <label for="q192">192 kbps</label>
-                </div>
+                
+                <button class="convert-btn" onclick="downloadVideo()">
+                    <i class="fas fa-download"></i>
+                    <span id="videoBtnText">Download Video</span>
+                </button>
             </div>
-        </div>
-
-        <button id="convertBtn">Convert to MP3</button>
-
-        <div id="error" class="error"></div>
-
-        <div id="progress" class="progress">
-            <div class="progress-bar">
-                <div id="progressFill" class="progress-fill"></div>
+            
+            <!-- Audio Tab -->
+            <div class="tab-pane" id="audioTab">
+                <div class="input-group">
+                    <i class="fas fa-link input-icon"></i>
+                    <input type="url" class="url-input" id="audioUrl" placeholder="Video URL দিন...">
+                </div>
+                
+                <div class="options-grid">
+                    <div class="option-group">
+                        <label>Quality</label>
+                        <select id="audioQuality">
+                            <option value="64">64 kbps</option>
+                            <option value="128" selected>128 kbps</option>
+                            <option value="192">192 kbps</option>
+                            <option value="320">320 kbps</option>
+                        </select>
+                    </div>
+                    <div class="option-group">
+                        <label>Format</label>
+                        <select id="audioFormat">
+                            <option value="mp3" selected>MP3</option>
+                            <option value="m4a">M4A</option>
+                            <option value="wav">WAV</option>
+                            <option value="flac">FLAC</option>
+                            <option value="ogg">OGG</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="convert-btn" onclick="convertAudio()">
+                    <i class="fas fa-music"></i>
+                    <span id="audioBtnText">Convert to Audio</span>
+                </button>
             </div>
-            <p id="progressText" class="progress-text">Processing...</p>
-        </div>
-
-        <div id="result" class="result">
-            <audio id="audioPlayer" controls></audio>
-            <a id="downloadBtn" class="download-btn" href="#" download>
-                ⬇️ Download MP3
-            </a>
+            
+            <!-- Image Tab -->
+            <div class="tab-pane" id="imageTab">
+                <div class="input-group">
+                    <i class="fas fa-link input-icon"></i>
+                    <input type="url" class="url-input" id="imageUrl" placeholder="Video URL দিন...">
+                </div>
+                
+                <button class="convert-btn" onclick="downloadImage()">
+                    <i class="fas fa-image"></i>
+                    <span id="imageBtnText">Download Thumbnail</span>
+                </button>
+            </div>
+            
+            <!-- Progress -->
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill"></div>
+            </div>
+            
+            <!-- Error -->
+            <div class="error-box" id="errorBox">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorMessage"></span>
+            </div>
+            
+            <!-- Result -->
+            <div class="result-box" id="resultBox">
+                <div class="result-icon">✅</div>
+                <div id="resultMessage">Conversion Successful!</div>
+                <a class="download-btn" id="downloadLink" href="#" download>
+                    <i class="fas fa-download"></i> Download
+                </a>
+            </div>
         </div>
     </div>
-
+    
     <script>
-        const videoUrlInput = document.getElementById('videoUrl');
-        const convertBtn = document.getElementById('convertBtn');
-        const errorDiv = document.getElementById('error');
-        const progressDiv = document.getElementById('progress');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const resultDiv = document.getElementById('result');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const downloadBtn = document.getElementById('downloadBtn');
-
+        const API_BASE = 'https://facebook-audio-converter.onrender.com';
+        
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        }
+        
         function showError(message) {
-            errorDiv.textContent = message;
-            errorDiv.classList.add('active');
-            setTimeout(() => {
-                errorDiv.classList.remove('active');
-            }, 10000);
+            const errorBox = document.getElementById('errorBox');
+            document.getElementById('errorMessage').textContent = message;
+            errorBox.classList.add('active');
+            setTimeout(() => errorBox.classList.remove('active'), 5000);
         }
-
-        function updateProgress(percent, message) {
-            progressFill.style.width = percent + '%';
-            progressText.textContent = message;
+        
+        function showProgress() {
+            document.getElementById('progressBar').classList.add('active');
         }
-
-        function isValidFacebookUrl(url) {
-            return url.includes('facebook.com') || url.includes('fb.watch') || url.includes('fb.com');
+        
+        function hideProgress() {
+            document.getElementById('progressBar').classList.remove('active');
         }
-
-        convertBtn.addEventListener('click', async () => {
-            const url = videoUrlInput.value.trim();
+        
+        function showResult(downloadUrl) {
+            const resultBox = document.getElementById('resultBox');
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = downloadUrl.startsWith('http') ? downloadUrl : API_BASE + downloadUrl;
+            resultBox.classList.add('active');
+        }
+        
+        async function downloadVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const quality = document.getElementById('videoQuality').value;
             
             if (!url) {
-                showError('দয়া করে Facebook ভিডিও URL লিখুন');
+                showError('দয়া করে Video URL দিন');
                 return;
             }
             
-            if (!isValidFacebookUrl(url)) {
-                showError('সঠিক Facebook URL লিখুন');
-                return;
-            }
-            
-            const quality = document.querySelector('input[name="quality"]:checked')?.value || '128';
-            
-            // Reset UI
-            errorDiv.classList.remove('active');
-            resultDiv.classList.remove('active');
-            progressDiv.classList.add('active');
-            convertBtn.disabled = true;
-            convertBtn.textContent = 'Converting...';
-            updateProgress(10, 'Server connecting...');
+            const btn = document.getElementById('videoBtnText');
+            btn.innerHTML = '<span class="spinner"></span> Downloading...';
+            showProgress();
             
             try {
-                const response = await fetch('/api/convert', {
+                const response = await fetch(API_BASE + '/api/download-video', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, quality })
                 });
                 
-                if (!response.ok) {
-                    let errorMsg = 'Conversion failed';
-                    try {
-                        const errorData = await response.json();
-                        errorMsg = errorData.error || errorMsg;
-                    } catch (e) {
-                        errorMsg = `Server error (${response.status})`;
-                    }
-                    throw new Error(errorMsg);
-                }
-                
-                const text = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    throw new Error('Invalid server response');
-                }
+                const data = await response.json();
                 
                 if (data.success) {
-                    updateProgress(100, 'Conversion complete!');
-                    audioPlayer.src = data.streamUrl;
-                    downloadBtn.href = data.downloadUrl;
-                    
-                    setTimeout(() => {
-                        resultDiv.classList.add('active');
-                        progressDiv.classList.remove('active');
-                    }, 500);
+                    showResult(data.downloadUrl);
                 } else {
-                    throw new Error(data.error || 'Conversion failed');
+                    showError(data.error || 'Download failed');
                 }
             } catch (error) {
-                console.error('Error:', error);
-                showError('⚠️ ' + (error.message || 'Something went wrong'));
-                progressDiv.classList.remove('active');
+                showError('Network error. Please try again.');
             } finally {
-                convertBtn.disabled = false;
-                convertBtn.textContent = 'Convert to MP3';
+                btn.innerHTML = '<i class="fas fa-download"></i> Download Video';
+                hideProgress();
             }
-        });
-
-        videoUrlInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                convertBtn.click();
+        }
+        
+        async function convertAudio() {
+            const url = document.getElementById('audioUrl').value.trim();
+            const quality = document.getElementById('audioQuality').value;
+            const format = document.getElementById('audioFormat').value;
+            
+            if (!url) {
+                showError('দয়া করে Video URL দিন');
+                return;
             }
-        });
+            
+            const btn = document.getElementById('audioBtnText');
+            btn.innerHTML = '<span class="spinner"></span> Converting...';
+            showProgress();
+            
+            try {
+                const response = await fetch(API_BASE + '/api/convert-audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, quality, format })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult(data.downloadUrl);
+                } else {
+                    showError(data.error || 'Conversion failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                btn.innerHTML = '<i class="fas fa-music"></i> Convert to Audio';
+                hideProgress();
+            }
+        }
+        
+        async function downloadImage() {
+            const url = document.getElementById('imageUrl').value.trim();
+            
+            if (!url) {
+                showError('দয়া করে Video URL দিন');
+                return;
+            }
+            
+            showProgress();
+            
+            try {
+                const response = await fetch(API_BASE + '/api/download-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showResult(data.downloadUrl);
+                } else {
+                    showError(data.error || 'Image download failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            } finally {
+                hideProgress();
+            }
+        }
     </script>
 </body>
 </html>
