@@ -3,526 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Facebook Video থেকে Audio Converter - ভিডিও থেকে MP3 ডাউনলোড করুন">
     <title>Facebook Audio Converter - ভিডিও থেকে MP3</title>
     <style>
-        :root {
-            --primary: #1877f2;
-            --primary-dark: #1464d6;
-            --success: #42b72a;
-            --danger: #ff4444;
-            --warning: #ffbb33;
-            --bg: #f0f2f5;
-            --card: #ffffff;
-            --text: #1c1e21;
-            --text-secondary: #65676b;
-            --border: #dddfe2;
-            --shadow: 0 2px 8px rgba(0,0,0,0.1);
-            --shadow-lg: 0 4px 16px rgba(0,0,0,0.15);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: -apple-system, sans-serif;
+            background: #f0f2f5;
             min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 640px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            text-align: center;
-            padding: 40px 0 30px;
-        }
-
-        .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 20px;
-            background: linear-gradient(135deg, var(--primary), #42b72a);
-            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 36px;
-            color: white;
-            box-shadow: var(--shadow-lg);
-            animation: pulse 2s infinite;
+            padding: 20px;
         }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--primary), #42b72a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .main-card {
-            background: var(--card);
+        .container {
+            background: white;
             border-radius: 16px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .url-input {
+            padding: 30px;
+            max-width: 500px;
             width: 100%;
-            padding: 14px 16px;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s;
-            outline: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .url-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+        h1 {
+            text-align: center;
+            color: #1877f2;
+            margin-bottom: 10px;
         }
-
-        .url-input::placeholder {
-            color: #909090;
+        .subtitle {
+            text-align: center;
+            color: #65676b;
+            margin-bottom: 30px;
         }
-
-        .quality-selector {
+        .input-group {
             margin-bottom: 20px;
         }
-
-        .quality-label {
+        label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
         }
-
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dddfe2;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #1877f2;
+        }
+        .quality-group {
+            margin-bottom: 20px;
+        }
         .quality-options {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
             gap: 10px;
         }
-
         .quality-option {
-            position: relative;
-            cursor: pointer;
+            flex: 1;
         }
-
         .quality-option input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
+            display: none;
         }
-
         .quality-option label {
             display: block;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
-            border: 2px solid var(--border);
+            border: 2px solid #dddfe2;
             border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s;
             cursor: pointer;
+            transition: all 0.3s;
         }
-
         .quality-option input:checked + label {
-            border-color: var(--primary);
-            background: rgba(24, 119, 242, 0.05);
-            color: var(--primary);
+            border-color: #1877f2;
+            background: #e7f3ff;
+            color: #1877f2;
         }
-
-        .convert-btn {
+        button {
             width: 100%;
-            padding: 16px;
-            background: var(--primary);
+            padding: 14px;
+            background: #1877f2;
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
         }
-
-        .convert-btn:hover:not(:disabled) {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+        button:hover:not(:disabled) {
+            background: #1464d6;
         }
-
-        .convert-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .convert-btn:disabled {
+        button:disabled {
             opacity: 0.6;
             cursor: not-allowed;
         }
-
-        .convert-btn.loading::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            right: 16px;
-            top: 50%;
-            margin-top: -10px;
+        .error {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #fde8e8;
+            color: #ff4444;
+            border-radius: 8px;
+            border-left: 4px solid #ff4444;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .error.active {
+            display: block;
         }
-
-        .progress-container {
+        .progress {
             display: none;
             margin-top: 20px;
-            padding: 16px;
-            background: #f8f9fa;
-            border-radius: 8px;
         }
-
-        .progress-container.active {
+        .progress.active {
             display: block;
-            animation: fadeIn 0.3s;
         }
-
-        .progress-bar-wrapper {
-            width: 100%;
-            height: 6px;
-            background: #e9ecef;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
         .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--primary), #42b72a);
-            border-radius: 3px;
-            transition: width 0.3s;
-            animation: shimmer 2s infinite;
+            background: #1877f2;
+            width: 0%;
+            transition: width 0.5s;
         }
-
-        @keyframes shimmer {
-            0% { background-position: -200px 0; }
-            100% { background-position: 200px 0; }
-        }
-
         .progress-text {
             text-align: center;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
+            margin-top: 10px;
+            color: #65676b;
         }
-
-        .result-section {
+        .result {
             display: none;
             margin-top: 20px;
             padding: 20px;
             background: #f8f9fa;
             border-radius: 8px;
         }
-
-        .result-section.active {
+        .result.active {
             display: block;
-            animation: fadeIn 0.5s;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .audio-player {
+        audio {
             width: 100%;
-            margin-bottom: 16px;
+            margin-bottom: 15px;
         }
-
-        .audio-player audio {
-            width: 100%;
-            outline: none;
-        }
-
         .download-btn {
             display: block;
-            width: 100%;
-            padding: 14px;
-            background: var(--success);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
             text-align: center;
+            padding: 12px;
+            background: #42b72a;
+            color: white;
             text-decoration: none;
-            transition: all 0.3s;
+            border-radius: 8px;
+            font-weight: 600;
         }
-
         .download-btn:hover {
             background: #36a420;
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .error-message {
-            display: none;
-            margin-top: 16px;
-            padding: 12px;
-            background: #fde8e8;
-            color: var(--danger);
-            border-radius: 8px;
-            font-size: 0.9rem;
-            border-left: 4px solid var(--danger);
-        }
-
-        .error-message.active {
-            display: block;
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        .info-section {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
-        }
-
-        .info-section h3 {
-            margin-bottom: 16px;
-            color: var(--text);
-            font-size: 1.2rem;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-list li {
-            padding: 8px 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
-        }
-
-        .feature-list li::before {
-            content: '✓';
-            color: var(--success);
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px 0;
-            color: var(--text-secondary);
-            margin-top: auto;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 12px;
-            }
-            
-            .title {
-                font-size: 1.6rem;
-            }
-            
-            .logo {
-                width: 60px;
-                height: 60px;
-                font-size: 28px;
-                border-radius: 16px;
-            }
-            
-            .main-card {
-                padding: 16px;
-                border-radius: 12px;
-            }
-            
-            .quality-options {
-                grid-template-columns: 1fr;
-            }
-            
-            .convert-btn {
-                font-size: 1rem;
-                padding: 14px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <div class="logo">🎵</div>
-            <h1 class="title">Facebook Audio Converter</h1>
-            <p class="subtitle">ভিডিও থেকে MP3 অডিও ডাউনলোড করুন</p>
-        </header>
+        <h1>🎵 Facebook Audio Converter</h1>
+        <p class="subtitle">ভিডিও থেকে MP3 অডিও ডাউনলোড করুন</p>
 
-        <main class="main-card">
-            <div class="input-group">
-                <label class="input-label" for="videoUrl">Facebook Video URL</label>
-                <input 
-                    type="url" 
-                    id="videoUrl" 
-                    class="url-input" 
-                    placeholder="https://www.facebook.com/watch?v=... বা https://fb.watch/..."
-                    required
-                >
-            </div>
+        <div class="input-group">
+            <label>Facebook Video URL</label>
+            <input type="url" id="videoUrl" placeholder="https://www.facebook.com/watch?v=...">
+        </div>
 
-            <div class="quality-selector">
-                <label class="quality-label">অডিও কোয়ালিটি</label>
-                <div class="quality-options">
-                    <div class="quality-option">
-                        <input type="radio" name="quality" id="quality-low" value="96">
-                        <label for="quality-low">96 kbps</label>
-                    </div>
-                    <div class="quality-option">
-                        <input type="radio" name="quality" id="quality-medium" value="128" checked>
-                        <label for="quality-medium">128 kbps</label>
-                    </div>
-                    <div class="quality-option">
-                        <input type="radio" name="quality" id="quality-high" value="192">
-                        <label for="quality-high">192 kbps</label>
-                    </div>
+        <div class="quality-group">
+            <label>অডিও কোয়ালিটি</label>
+            <div class="quality-options">
+                <div class="quality-option">
+                    <input type="radio" name="quality" id="q96" value="96">
+                    <label for="q96">96 kbps</label>
+                </div>
+                <div class="quality-option">
+                    <input type="radio" name="quality" id="q128" value="128" checked>
+                    <label for="q128">128 kbps</label>
+                </div>
+                <div class="quality-option">
+                    <input type="radio" name="quality" id="q192" value="192">
+                    <label for="q192">192 kbps</label>
                 </div>
             </div>
+        </div>
 
-            <button id="convertBtn" class="convert-btn">
-                <span>Convert to MP3</span>
-            </button>
+        <button id="convertBtn">Convert to MP3</button>
 
-            <div id="errorMessage" class="error-message"></div>
+        <div id="error" class="error"></div>
 
-            <div id="progressContainer" class="progress-container">
-                <div class="progress-bar-wrapper">
-                    <div id="progressBar" class="progress-bar" style="width: 0%"></div>
-                </div>
-                <p id="progressText" class="progress-text">Processing...</p>
+        <div id="progress" class="progress">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
             </div>
+            <p id="progressText" class="progress-text">Processing...</p>
+        </div>
 
-            <div id="resultSection" class="result-section">
-                <div class="audio-player">
-                    <audio id="audioPlayer" controls></audio>
-                </div>
-                <a id="downloadBtn" class="download-btn" href="#" download>
-                    ⬇️ Download MP3
-                </a>
-            </div>
-        </main>
-
-        <section class="info-section">
-            <h3>💡 বিশেষত্ব</h3>
-            <ul class="feature-list">
-                <li>Facebook ভিডিও থেকে উচ্চমানের MP3 এক্সট্র্যাক্ট করুন</li>
-                <li>কোনো সফটওয়্যার ইনস্টল করার প্রয়োজন নেই</li>
-                <li>সম্পূর্ণ ফ্রি এবং ব্যবহার করা সহজ</li>
-                <li>মোবাইল এবং ডেস্কটপ সব ডিভাইসে কাজ করে</li>
-                <li>তিন ধরনের অডিও কোয়ালিটি অপশন</li>
-            </ul>
-        </section>
-
-        <footer class="footer">
-            <p>© 2024 Facebook Audio Converter. All rights reserved.</p>
-            <p>Made with ❤️ for music lovers</p>
-        </footer>
+        <div id="result" class="result">
+            <audio id="audioPlayer" controls></audio>
+            <a id="downloadBtn" class="download-btn" href="#" download>
+                ⬇️ Download MP3
+            </a>
+        </div>
     </div>
 
     <script>
         const videoUrlInput = document.getElementById('videoUrl');
         const convertBtn = document.getElementById('convertBtn');
-        const errorMessage = document.getElementById('errorMessage');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressBar = document.getElementById('progressBar');
+        const errorDiv = document.getElementById('error');
+        const progressDiv = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
         const progressText = document.getElementById('progressText');
-        const resultSection = document.getElementById('resultSection');
+        const resultDiv = document.getElementById('result');
         const audioPlayer = document.getElementById('audioPlayer');
         const downloadBtn = document.getElementById('downloadBtn');
 
-        // YouTube-style URL validation
-        function isValidFacebookUrl(url) {
-            const patterns = [
-                /^https?:\/\/(www\.)?facebook\.com\/.+/i,
-                /^https?:\/\/(www\.)?fb\.watch\/.+/i,
-                /^https?:\/\/(www\.)?facebook\.com\/watch\/.+/i,
-                /^https?:\/\/(www\.)?facebook\.com\/reel\/.+/i,
-                /^https?:\/\/(www\.)?facebook\.com\/share\/.+/i
-            ];
-            
-            return patterns.some(pattern => pattern.test(url));
-        }
-
         function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.classList.add('active');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('active');
             setTimeout(() => {
-                errorMessage.classList.remove('active');
-            }, 5000);
-        }
-
-        function resetUI() {
-            convertBtn.disabled = false;
-            convertBtn.classList.remove('loading');
-            progressContainer.classList.remove('active');
-            progressBar.style.width = '0%';
-            resultSection.classList.remove('active');
-            convertBtn.innerHTML = '<span>Convert to MP3</span>';
+                errorDiv.classList.remove('active');
+            }, 10000);
         }
 
         function updateProgress(percent, message) {
-            progressBar.style.width = `${percent}%`;
+            progressFill.style.width = percent + '%';
             progressText.textContent = message;
+        }
+
+        function isValidFacebookUrl(url) {
+            return url.includes('facebook.com') || url.includes('fb.watch') || url.includes('fb.com');
         }
 
         convertBtn.addEventListener('click', async () => {
@@ -534,30 +248,19 @@
             }
             
             if (!isValidFacebookUrl(url)) {
-                showError('সঠিক Facebook URL লিখুন। উদাহরণ: https://www.facebook.com/watch?v=...');
+                showError('সঠিক Facebook URL লিখুন');
                 return;
             }
             
             const quality = document.querySelector('input[name="quality"]:checked')?.value || '128';
             
             // Reset UI
-            errorMessage.classList.remove('active');
-            resultSection.classList.remove('active');
-            
-            // Show loading state
+            errorDiv.classList.remove('active');
+            resultDiv.classList.remove('active');
+            progressDiv.classList.add('active');
             convertBtn.disabled = true;
-            convertBtn.classList.add('loading');
-            convertBtn.innerHTML = '<span>Converting...</span>';
-            progressContainer.classList.add('active');
-            
-            // Simulate progress updates
-            let progress = 0;
-            const progressInterval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress < 90) {
-                    updateProgress(Math.min(progress, 90), 'Processing video...');
-                }
-            }, 1000);
+            convertBtn.textContent = 'Converting...';
+            updateProgress(10, 'Server connecting...');
             
             try {
                 const response = await fetch('/api/convert', {
@@ -568,62 +271,51 @@
                     body: JSON.stringify({ url, quality })
                 });
                 
-                clearInterval(progressInterval);
-                
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Conversion failed');
+                    let errorMsg = 'Conversion failed';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) {
+                        errorMsg = `Server error (${response.status})`;
+                    }
+                    throw new Error(errorMsg);
                 }
                 
-                const data = await response.json();
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid server response');
+                }
                 
                 if (data.success) {
                     updateProgress(100, 'Conversion complete!');
-                    
-                    // Set audio player source
                     audioPlayer.src = data.streamUrl;
                     downloadBtn.href = data.downloadUrl;
                     
-                    // Show result section
                     setTimeout(() => {
-                        resultSection.classList.add('active');
-                        progressContainer.classList.remove('active');
+                        resultDiv.classList.add('active');
+                        progressDiv.classList.remove('active');
                     }, 500);
-                    
-                    // Success message
-                    console.log('✅ Conversion successful:', data);
                 } else {
                     throw new Error(data.error || 'Conversion failed');
                 }
             } catch (error) {
-                clearInterval(progressInterval);
-                console.error('Conversion error:', error);
-                showError('⚠️ ' + (error.message || 'Conversion failed. Please try again.'));
-                progressContainer.classList.remove('active');
+                console.error('Error:', error);
+                showError('⚠️ ' + (error.message || 'Something went wrong'));
+                progressDiv.classList.remove('active');
             } finally {
                 convertBtn.disabled = false;
-                convertBtn.classList.remove('loading');
-                convertBtn.innerHTML = '<span>Convert to MP3</span>';
+                convertBtn.textContent = 'Convert to MP3';
             }
         });
 
-        // Enter key to submit
         videoUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 convertBtn.click();
             }
-        });
-
-        // Auto-focus on load
-        window.addEventListener('load', () => {
-            videoUrlInput.focus();
-        });
-
-        // Clean URL input on paste
-        videoUrlInput.addEventListener('paste', () => {
-            setTimeout(() => {
-                videoUrlInput.value = videoUrlInput.value.trim();
-            }, 0);
         });
     </script>
 </body>
