@@ -2,11 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs-extra');
 const { v4: uuidv4 } = require('uuid');
-const axios = require('axios');
+const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
+const ffmpegPath = require('ffmpeg-static');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,7 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 30,
   message: { error: 'Too many requests, please try again later.' }
 });
 
@@ -33,6 +35,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Temporary directory
 const TEMP_DIR = path.join(__dirname, 'temp');
 fs.ensureDirSync(TEMP_DIR);
+
+// yt-dlp binary path
+const YTDLP_PATH = path.join(__dirname, 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
 
 // Cleanup function
 async function cleanupOldFiles() {
@@ -47,7 +52,7 @@ async function cleanupOldFiles() {
       
       if (fileAge > 3600000) {
         await fs.remove(filePath);
-        console.log(`Cleaned up old file: ${file}`);
+        console.log(`Cleaned up: ${file}`);
       }
     }
   } catch (error) {
@@ -57,16 +62,57 @@ async function cleanupOldFiles() {
 
 setInterval(cleanupOldFiles, 1800000);
 
-// Test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    status: 'ok',
-    message: 'Server is running correctly',
-    timestamp: new Date().toISOString()
-  });
+// URL validation
+function isValidFacebookUrl(url) {
+  const patterns = [
+    /^https?:\/\/(www\.)?facebook\.com\/.+/i,
+    /^https?:\/\/(www\.)?fb\.watch\/.+/i,
+    /^https?:\/\/(www\.)?facebook\.com\/watch\/.+/i,
+    /^https?:\/\/(www\.)?facebook\.com\/reel\/.+/i,
+    /^https?:\/\/(www\.)?facebook\.com\/share\/.+/i,
+    /^https?:\/\/(www\.)?facebook\.com\/videos\/.+/i
+  ];
+  
+  return patterns.some(pattern => pattern.test(url));
+}
+
+// Video info endpoint
+app.get('/api/video-info', apiLimiter, async (req, res) => {
+  try {
+    const { url } = req.query;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+    
+    if (!isValidFacebookUrl(url)) {
+      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    }
+    
+    // Get video info using yt-dlp
+    const { stdout } = await execPromise(
+      `"${YTDLP_PATH}" --dump-json --no-warnings --no-call-home "${url}"`,
+      { timeout: 60000 }
+    );
+    
+    const info = JSON.parse(stdout);
+    
+    res.json({
+      title: info.title || 'Unknown Title',
+      duration: info.duration || 0,
+      thumbnail: info.thumbnail || '',
+      uploader: info.uploader || 'Unknown'
+    });
+    
+  } catch (error) {
+    console.error('Video info error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get video information. Make sure the URL is valid and video is public.' 
+    });
+  }
 });
 
-// Convert endpoint - Simple version for testing
+// Convert endpoint
 app.post('/api/convert', apiLimiter, async (req, res) => {
   try {
     const { url, quality = '128' } = req.body;
@@ -75,21 +121,120 @@ app.post('/api/convert', apiLimiter, async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
+    if (!isValidFacebookUrl(url)) {
+      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    }
+    
     const conversionId = uuidv4();
     const outputPath = path.join(TEMP_DIR, `${conversionId}.mp3`);
     
-    // For now, return a test response
-    // Facebook video download require special handling
-    res.json({
-      success: true,
-      message: 'Conversion started',
-      conversionId: conversionId,
-      note: 'Facebook video download requires additional setup'
+    try {
+      // Download and convert using yt-dlp with ffmpeg
+      const command = `"${YTDLP_PATH}" -x --audio-format mp3 --audio-quality ${quality} -o "${outputPath}" --no-warnings --no-call-home --no-playlist "${url}"`;
+      
+      console.log('Running command:', command);
+      
+      await execPromise(command, { 
+        timeout: 300000, // 5 minutes timeout
+        maxBuffer: 1024 * 1024 * 10 // 10MB buffer
+      });
+      
+      // Check if file exists
+      if (!await fs.pathExists(outputPath)) {
+        throw new Error('Output file not created');
+      }
+      
+      const downloadUrl = `/api/download/${conversionId}`;
+      const streamUrl = `/api/stream/${conversionId}`;
+      
+      // Schedule cleanup
+      setTimeout(async () => {
+        await fs.remove(outputPath).catch(() => {});
+        console.log(`Cleaned up: ${conversionId}`);
+      }, 3600000);
+      
+      res.json({
+        success: true,
+        downloadUrl: downloadUrl,
+        streamUrl: streamUrl,
+        fileName: `facebook-audio-${conversionId.slice(0, 8)}.mp3`
+      });
+      
+    } catch (error) {
+      console.error('Conversion error:', error);
+      await fs.remove(outputPath).catch(() => {});
+      res.status(500).json({ 
+        error: 'Conversion failed. Please make sure the video is public and try again.' 
+      });
+    }
+  } catch (error) {
+    console.error('Convert endpoint error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Download endpoint
+app.get('/api/download/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filePath = path.join(TEMP_DIR, `${id}.mp3`);
+    
+    if (!await fs.pathExists(filePath)) {
+      return res.status(404).json({ error: 'File not found or expired' });
+    }
+    
+    res.download(filePath, `facebook-audio-${id.slice(0, 8)}.mp3`, (err) => {
+      if (err) {
+        console.error('Download error:', err);
+      }
     });
     
   } catch (error) {
-    console.error('Convert endpoint error:', error);
-    res.status(500).json({ error: 'Internal server error: ' + error.message });
+    console.error('Download endpoint error:', error);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
+
+// Stream endpoint
+app.get('/api/stream/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const filePath = path.join(TEMP_DIR, `${id}.mp3`);
+    
+    if (!await fs.pathExists(filePath)) {
+      return res.status(404).json({ error: 'File not found or expired' });
+    }
+    
+    const stat = await fs.stat(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
+      
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'audio/mpeg',
+      });
+      
+      const stream = fs.createReadStream(filePath, { start, end });
+      stream.pipe(res);
+    } else {
+      res.writeHead(200, {
+        'Content-Length': fileSize,
+        'Content-Type': 'audio/mpeg',
+      });
+      
+      fs.createReadStream(filePath).pipe(res);
+    }
+  } catch (error) {
+    console.error('Stream error:', error);
+    res.status(500).json({ error: 'Streaming failed' });
   }
 });
 
@@ -98,8 +243,17 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
+    uptime: process.uptime()
+  });
+});
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    message: 'Server is running correctly',
+    ytdlpExists: fs.pathExistsSync(YTDLP_PATH),
+    ytdlpPath: YTDLP_PATH
   });
 });
 
@@ -122,6 +276,5 @@ app.use((req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🎵 Facebook Audio Converter running on port ${PORT}`);
-  console.log(`📍 Server URL: http://localhost:${PORT}`);
-  console.log('✅ Server started successfully');
+  console.log(`✅ Server started successfully`);
 });
