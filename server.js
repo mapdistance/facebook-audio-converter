@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const ytdlp = require('yt-dlp-exec');
+const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs-extra');
@@ -60,14 +60,16 @@ async function cleanupOldFiles() {
 // Run cleanup every 30 minutes
 setInterval(cleanupOldFiles, 1800000);
 
-// Facebook URL validation
-function isValidFacebookUrl(url) {
+// URL validation function
+function isValidVideoUrl(url) {
   const patterns = [
     /^https?:\/\/(www\.)?facebook\.com\/.+/i,
     /^https?:\/\/(www\.)?fb\.watch\/.+/i,
     /^https?:\/\/(www\.)?facebook\.com\/watch\/.+/i,
     /^https?:\/\/(www\.)?facebook\.com\/reel\/.+/i,
-    /^https?:\/\/(www\.)?facebook\.com\/share\/.+/i
+    /^https?:\/\/(www\.)?facebook\.com\/share\/.+/i,
+    /^https?:\/\/(www\.)?youtube\.com\/watch\?v=.+/i,
+    /^https?:\/\/youtu\.be\/.+/i
   ];
   
   return patterns.some(pattern => pattern.test(url));
@@ -82,40 +84,34 @@ app.get('/api/video-info', apiLimiter, async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    if (!isValidFacebookUrl(url)) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    if (!isValidVideoUrl(url)) {
+      return res.status(400).json({ error: 'Invalid video URL' });
     }
     
-    // Get video info using yt-dlp
-    const info = await ytdlp(url, {
-      dumpSingleJson: true,
-      noWarnings: true,
-      noCallHome: true,
-      noCheckCertificate: true,
-      preferFreeFormats: true,
-      youtubeSkipDashManifest: true
-    });
+    // Get video info using ytdl-core
+    const info = await ytdl.getInfo(url);
     
-    // Extract relevant information
     const videoInfo = {
-      title: info.title || 'Unknown Title',
-      duration: info.duration || 0,
-      thumbnail: info.thumbnail || '',
-      uploader: info.uploader || 'Unknown',
+      title: info.videoDetails.title || 'Unknown Title',
+      duration: info.videoDetails.lengthSeconds || 0,
+      thumbnail: info.videoDetails.thumbnails && info.videoDetails.thumbnails.length > 0 
+        ? info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1].url 
+        : '',
+      uploader: info.videoDetails.author ? info.videoDetails.author.name : 'Unknown',
       formats: []
     };
     
     // Get audio formats
     if (info.formats) {
       const audioFormats = info.formats.filter(f => 
-        f.acodec !== 'none' && f.vcodec === 'none'
+        f.hasAudio && !f.hasVideo
       );
       
       videoInfo.formats = audioFormats.map(f => ({
-        format_id: f.format_id,
-        ext: f.ext,
-        quality: f.abr ? `${f.abr}kbps` : 'Unknown',
-        filesize: f.filesize || 0
+        format_id: f.itag,
+        ext: f.container || 'mp4',
+        quality: f.audioBitrate ? `${f.audioBitrate}kbps` : 'Unknown',
+        filesize: f.contentLength ? parseInt(f.contentLength) : 0
       }));
     }
     
@@ -137,43 +133,38 @@ app.post('/api/convert', apiLimiter, async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    if (!isValidFacebookUrl(url)) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    if (!isValidVideoUrl(url)) {
+      return res.status(400).json({ error: 'Invalid video URL' });
     }
     
     // Generate unique ID for this conversion
     const conversionId = uuidv4();
     const outputPath = path.join(TEMP_DIR, `${conversionId}.mp3`);
-    const videoPath = path.join(TEMP_DIR, `${conversionId}.mp4`);
     
     try {
-      // Download video with best audio quality
-      await ytdlp(url, {
-        output: videoPath,
-        format: 'bestaudio/best',
-        noPlaylist: true,
-        noWarnings: true,
-        noCallHome: true,
-        noCheckCertificate: true,
-        preferFreeFormats: true
+      // Create audio stream from video
+      const audioStream = ytdl(url, {
+        quality: 'highestaudio',
+        filter: 'audioonly'
       });
       
       // Convert to MP3 using ffmpeg
       await new Promise((resolve, reject) => {
-        ffmpeg(videoPath)
+        ffmpeg(audioStream)
           .toFormat('mp3')
           .audioBitrate(quality)
           .audioCodec('libmp3lame')
           .on('end', resolve)
-          .on('error', reject)
+          .on('error', (err) => {
+            console.error('FFmpeg error:', err);
+            reject(err);
+          })
           .save(outputPath);
       });
       
-      // Clean up video file
-      await fs.remove(videoPath);
-      
-      // Generate download URL
+      // Generate URLs
       const downloadUrl = `/api/download/${conversionId}`;
+      const streamUrl = `/api/stream/${conversionId}`;
       
       // Schedule cleanup after 1 hour
       setTimeout(async () => {
@@ -188,13 +179,12 @@ app.post('/api/convert', apiLimiter, async (req, res) => {
       res.json({
         success: true,
         downloadUrl: downloadUrl,
-        streamUrl: `/api/stream/${conversionId}`,
+        streamUrl: streamUrl,
         fileName: `facebook-audio-${conversionId.slice(0, 8)}.mp3`
       });
       
     } catch (error) {
       console.error('Conversion error:', error);
-      await fs.remove(videoPath).catch(() => {});
       await fs.remove(outputPath).catch(() => {});
       res.status(500).json({ 
         error: 'Conversion failed. Please try again with a valid video URL.' 
@@ -216,7 +206,8 @@ app.get('/api/download/:id', async (req, res) => {
       return res.status(404).json({ error: 'File not found or expired' });
     }
     
-    res.download(filePath, `facebook-audio-${id.slice(0, 8)}.mp3`);
+    const fileName = `facebook-audio-${id.slice(0, 8)}.mp3`;
+    res.download(filePath, fileName);
   } catch (error) {
     console.error('Download error:', error);
     res.status(500).json({ error: 'Download failed' });
@@ -275,7 +266,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve main page
+// Root endpoint - serve main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -296,4 +287,5 @@ app.listen(PORT, () => {
   console.log(`🎵 Facebook Audio Converter running on port ${PORT}`);
   console.log(`📍 Server URL: http://localhost:${PORT}`);
   console.log('🔄 Auto cleanup enabled (1 hour intervals)');
+  console.log('✅ Ready to convert videos to MP3!');
 });
