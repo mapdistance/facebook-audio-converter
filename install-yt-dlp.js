@@ -30,11 +30,11 @@ async function installYtDlp() {
   const binaryPath = path.join(binDir, binaryName);
   
   try {
-    // Download yt-dlp binary
     const response = await axios({
       method: 'get',
       url: url,
-      responseType: 'stream'
+      responseType: 'stream',
+      timeout: 60000
     });
     
     const writer = fs.createWriteStream(binaryPath);
@@ -45,14 +45,31 @@ async function installYtDlp() {
       writer.on('error', reject);
     });
     
-    // Make executable
     if (platform !== 'win32') {
       fs.chmodSync(binaryPath, 0o755);
     }
     
     console.log('✅ yt-dlp installed successfully at:', binaryPath);
+    
+    // Test installation
+    try {
+      const version = execSync(`"${binaryPath}" --version`).toString().trim();
+      console.log('📦 yt-dlp version:', version);
+    } catch (error) {
+      console.log('⚠️ Could not verify yt-dlp version');
+    }
+    
   } catch (error) {
     console.error('❌ Failed to download yt-dlp:', error.message);
+    console.log('⚠️ Will try alternative installation method...');
+    
+    // Alternative: Use youtube-dl-exec package
+    try {
+      execSync('npm install youtube-dl-exec --save', { stdio: 'inherit' });
+      console.log('✅ youtube-dl-exec installed as fallback');
+    } catch (fallbackError) {
+      console.error('❌ Fallback installation failed:', fallbackError.message);
+    }
   }
 }
 
